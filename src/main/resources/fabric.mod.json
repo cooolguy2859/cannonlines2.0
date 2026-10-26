@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "cannonlines",
+  "version": "${version}",
+  "name": "Cannon Lines",
+  "description": "Client-side End Rod particle trail from the rear of cannon slime entities.",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.cannonlines.CannonLinesClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
