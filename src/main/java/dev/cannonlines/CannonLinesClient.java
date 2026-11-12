@@ -4,10 +4,10 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.util.UUID;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -48,44 +48,44 @@ public final class CannonLinesClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        pingKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        pingKey = KeyMappingHelper.registerKeyBinding(new KeyBinding(
             "key.cannonlines.distance_ping", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_1, KeyBinding.Category.MISC
         ));
-        markEnemyKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        markEnemyKey = KeyMappingHelper.registerKeyBinding(new KeyBinding(
             "key.cannonlines.mark_enemy", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_H, KeyBinding.Category.MISC
         ));
-        autoReconnectMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        autoReconnectMenuKey = KeyMappingHelper.registerKeyBinding(new KeyBinding(
             "key.cannonlines.auto_reconnect_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, KeyBinding.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("cannonlines").executes(context -> {
+            dispatcher.register(ClientCommands.literal("cannonlines").executes(context -> {
                 enabled = !enabled;
                 context.getSource().sendFeedback(Text.literal("CannonLines: " + (enabled ? "ON" : "OFF")));
                 return Command.SINGLE_SUCCESS;
             }));
-            dispatcher.register(ClientCommandManager.literal("afk")
+            dispatcher.register(ClientCommands.literal("afk")
                 .executes(context -> {
                     autoReconnect.toggle(MinecraftClient.getInstance());
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(ClientCommandManager.literal("status").executes(context -> {
+                .then(ClientCommands.literal("status").executes(context -> {
                     context.getSource().sendFeedback(Text.literal("Auto-Reconnect: " + autoReconnect.getStatus()));
                     return Command.SINGLE_SUCCESS;
                 })));
-            dispatcher.register(ClientCommandManager.literal("cannonparty")
-                .then(ClientCommandManager.literal("join")
-                    .then(ClientCommandManager.argument("code", StringArgumentType.word())
+            dispatcher.register(ClientCommands.literal("cannonparty")
+                .then(ClientCommands.literal("join")
+                    .then(ClientCommands.argument("code", StringArgumentType.word())
                         .executes(context -> {
                             partyClient.join(StringArgumentType.getString(context, "code"), MinecraftClient.getInstance());
                             return Command.SINGLE_SUCCESS;
                         })))
-                .then(ClientCommandManager.literal("leave").executes(context -> {
+                .then(ClientCommands.literal("leave").executes(context -> {
                     partyClient.leave(MinecraftClient.getInstance());
                     return Command.SINGLE_SUCCESS;
                 }))
-                .then(ClientCommandManager.literal("status").executes(context -> {
+                .then(ClientCommands.literal("status").executes(context -> {
                     context.getSource().sendFeedback(Text.literal("CannonLines party: " + partyClient.status()));
                     return Command.SINGLE_SUCCESS;
                 })));
@@ -95,7 +95,7 @@ public final class CannonLinesClient implements ClientModInitializer {
     private void onTick(MinecraftClient client) {
         autoReconnect.tick(client);
         while (autoReconnectMenuKey.wasPressed()) {
-            client.setScreen(new AutoReconnectScreen(autoReconnect));
+            client.gui.setScreen(new AutoReconnectScreen(autoReconnect));
         }
 
         if (client.world == null || client.player == null) {
@@ -117,7 +117,7 @@ public final class CannonLinesClient implements ClientModInitializer {
         var player = client.player;
         Box searchBox = player.getBoundingBox().expand(MAX_SCAN_DISTANCE, 24.0, MAX_SCAN_DISTANCE);
 
-        for (Entity entity : world.getOtherEntities(player, searchBox, e -> e instanceof SlimeEntity)) {
+        for (Entity entity : world.getOtherEntities(player, searchBox, e -> e.getType() == net.minecraft.entity.EntityType.SLIMEEntity)) {
             SlimeEntity slime = (SlimeEntity) entity;
             if (!slime.isAlive() || player.squaredDistanceTo(slime) > MAX_SCAN_DISTANCE * MAX_SCAN_DISTANCE) continue;
 
@@ -132,7 +132,7 @@ public final class CannonLinesClient implements ClientModInitializer {
             for (double distance = 0.0; distance <= TRAIL_LENGTH; distance += PARTICLE_SPACING) {
                 if ((sampleIndex++ + tick / SCAN_EVERY_TICKS) % TRAIL_PARTICLE_PASSES != 0) continue;
                 Vec3d pos = rear.subtract(forward.multiply(distance));
-                world.addParticle(ParticleTypes.END_ROD, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+                ParticleCompat.spawn(world, ParticleTypes.END_ROD, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
             }
         }
     }
