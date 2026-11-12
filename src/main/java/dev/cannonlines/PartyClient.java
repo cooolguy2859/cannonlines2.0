@@ -61,7 +61,7 @@ final class PartyClient {
             Files.writeString(configFile, clean);
         } catch (IOException ignored) {
         }
-        post("/party/join", "{"code":" + quote(clean) + "}", client, "Joined CannonLines party " + clean + ".");
+        post("/party/join", "{\"code\":" + quote(clean) + "}", client, "Joined CannonLines party " + clean + ".");
         ticksSincePoll = 20;
     }
 
@@ -79,9 +79,9 @@ final class PartyClient {
 
     void sendPing(MinecraftClient client, Vec3d position) {
         if (partyCode == null || client.player == null || client.world == null) return;
-        String body = "{"player":" + quote(client.player.getName().getString())
-            + ","dimension":" + quote(client.world.getRegistryKey().getValue().toString())
-            + ","x":" + position.x + ","y":" + position.y + ","z":" + position.z + "}";
+        String body = "{\"player\":" + quote(client.player.getName().getString())
+            + ",\"dimension\":" + quote(client.world.getRegistryKey().getValue().toString())
+            + ",\"x\":" + position.x + ",\"y\":" + position.y + ",\"z\":" + position.z + "}";
         post("/party/ping", body, client, null);
     }
 
@@ -185,7 +185,7 @@ final class PartyClient {
     }
 
     private static String quote(String value) {
-        return """ + value.replace("\", "\\").replace(""", "\"") + """;
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
     private record SharedPing(String id, String player, String dimension,
