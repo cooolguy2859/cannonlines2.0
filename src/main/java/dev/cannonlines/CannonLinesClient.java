@@ -51,7 +51,6 @@ public final class CannonLinesClient implements ClientModInitializer {
     private int pingTicksRemaining;
 
     private KeyBinding markEnemyKey;
-    private KeyBinding autoReconnectMenuKey;
     private final PartyClient partyClient = new PartyClient();
     private final AutoReconnectManager autoReconnect = new AutoReconnectManager();
     private UUID markedPlayerId;
@@ -66,9 +65,6 @@ public final class CannonLinesClient implements ClientModInitializer {
         ));
         markEnemyKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.cannonlines.mark_enemy", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_H, KeyBinding.Category.MISC
-        ));
-        autoReconnectMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.cannonlines.auto_reconnect_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, KeyBinding.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
@@ -172,10 +168,6 @@ public final class CannonLinesClient implements ClientModInitializer {
 
     private void onTick(MinecraftClient client) {
         autoReconnect.tick(client);
-        while (autoReconnectMenuKey.wasPressed()) {
-            client.setScreen(new AutoReconnectScreen(autoReconnect));
-        }
-
         if (client.world == null || client.player == null) {
             markedPlayerId = null;
             pingPosition = null;
