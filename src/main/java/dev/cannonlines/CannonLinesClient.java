@@ -3,6 +3,11 @@ package dev.cannonlines;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.IOException;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -25,6 +30,12 @@ import org.lwjgl.glfw.GLFW;
 
 public final class CannonLinesClient implements ClientModInitializer {
     private boolean enabled = true;
+    private boolean hpDisplayEnabled = true;
+    private boolean placementGuideEnabled = true;
+    private boolean enemyHudEnabled = true;
+    private int reachBlocks = 5;
+    private final Set<String> enemyNames = new HashSet<>();
+    private Path enemyFile;
     private int tick = 0;
 
     private static final double TRAIL_LENGTH = 64.0;
@@ -48,6 +59,8 @@ public final class CannonLinesClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        enemyFile = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("cannonlines-enemies.txt");
+        loadEnemyNames();
         pingKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.cannonlines.distance_ping", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_1, KeyBinding.Category.MISC
         ));
@@ -65,6 +78,46 @@ public final class CannonLinesClient implements ClientModInitializer {
                 context.getSource().sendFeedback(Text.literal("CannonLines: " + (enabled ? "ON" : "OFF")));
                 return Command.SINGLE_SUCCESS;
             }));
+
+            dispatcher.register(ClientCommandManager.literal("enemy")
+                .then(ClientCommandManager.literal("add").then(ClientCommandManager.argument("player", StringArgumentType.word())
+                    .executes(ctx -> { String name = StringArgumentType.getString(ctx, "player");
+                        if (enemyNames.add(name.toLowerCase(java.util.Locale.ROOT))) { saveEnemyNames(); ctx.getSource().sendFeedback(Text.literal("Added " + name + " to your enemy list.")); }
+                        else ctx.getSource().sendFeedback(Text.literal(name + " is already on your enemy list."));
+                        return Command.SINGLE_SUCCESS; })))
+                .then(ClientCommandManager.literal("remove").then(ClientCommandManager.argument("player", StringArgumentType.word())
+                    .executes(ctx -> { String name = StringArgumentType.getString(ctx, "player");
+                        if (enemyNames.remove(name.toLowerCase(java.util.Locale.ROOT))) { saveEnemyNames(); ctx.getSource().sendFeedback(Text.literal("Removed " + name + " from your enemy list.")); }
+                        else ctx.getSource().sendFeedback(Text.literal(name + " wasn't on your enemy list."));
+                        return Command.SINGLE_SUCCESS; })))
+                .then(ClientCommandManager.literal("list").executes(ctx -> {
+                    ctx.getSource().sendFeedback(Text.literal(enemyNames.isEmpty() ? "Your enemy list is empty. Use /enemy add <player>." : "Enemies: " + String.join(", ", enemyNames)));
+                    return Command.SINGLE_SUCCESS; })));
+            dispatcher.register(ClientCommandManager.literal("enemyhud")
+                .then(ClientCommandManager.literal("on").executes(ctx -> { enemyHudEnabled = true; ctx.getSource().sendFeedback(Text.literal("Enemy list HUD: ON")); return Command.SINGLE_SUCCESS; }))
+                .then(ClientCommandManager.literal("off").executes(ctx -> { enemyHudEnabled = false; ctx.getSource().sendFeedback(Text.literal("Enemy list HUD: OFF")); return Command.SINGLE_SUCCESS; })));
+            dispatcher.register(ClientCommandManager.literal("nether")
+                .then(ClientCommandManager.argument("x", StringArgumentType.word()).then(ClientCommandManager.argument("z", StringArgumentType.word())
+                    .executes(ctx -> { int x = parseCoordinate(StringArgumentType.getString(ctx,"x")); int z = parseCoordinate(StringArgumentType.getString(ctx,"z"));
+                        ctx.getSource().sendFeedback(Text.literal("Nether coordinates: X " + Math.floorDiv(x, 8) + ", Z " + Math.floorDiv(z, 8)));
+                        return Command.SINGLE_SUCCESS; })))
+                .then(ClientCommandManager.literal("overworld").then(ClientCommandManager.argument("x", StringArgumentType.word()).then(ClientCommandManager.argument("z", StringArgumentType.word())
+                    .executes(ctx -> { int x = parseCoordinate(StringArgumentType.getString(ctx,"x")); int z = parseCoordinate(StringArgumentType.getString(ctx,"z"));
+                        ctx.getSource().sendFeedback(Text.literal("Overworld coordinates: X " + (x * 8) + ", Z " + (z * 8)));
+                        return Command.SINGLE_SUCCESS; })))));
+            dispatcher.register(ClientCommandManager.literal("canon").then(ClientCommandManager.literal("dev").executes(ctx -> {
+                ctx.getSource().sendFeedback(Text.literal("Cannon Dev is active. Minecraft 1.21.11 | Development build."));
+                return Command.SINGLE_SUCCESS; })));
+            dispatcher.register(ClientCommandManager.literal("cannon")
+                .then(ClientCommandManager.literal("gui").executes(ctx -> { ctx.getSource().sendFeedback(Text.literal("Use Right Shift to open CannonLines controls.")); return Command.SINGLE_SUCCESS; }))
+                .then(ClientCommandManager.literal("reach").then(ClientCommandManager.argument("blocks", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,500))
+                    .executes(ctx -> { reachBlocks = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,"blocks");
+                        ctx.getSource().sendFeedback(Text.literal("Particle line length set to " + reachBlocks + " blocks")); return Command.SINGLE_SUCCESS; })))
+                .then(ClientCommandManager.literal("turnoff").then(ClientCommandManager.literal("hp").executes(ctx -> { hpDisplayEnabled = false; ctx.getSource().sendFeedback(Text.literal("Block HP display: OFF")); return Command.SINGLE_SUCCESS; })))
+                .then(ClientCommandManager.literal("turnon").then(ClientCommandManager.literal("hp").executes(ctx -> { hpDisplayEnabled = true; ctx.getSource().sendFeedback(Text.literal("Block HP display: ON")); return Command.SINGLE_SUCCESS; })))
+                .then(ClientCommandManager.literal("guide").then(ClientCommandManager.literal("on").executes(ctx -> { placementGuideEnabled = true; ctx.getSource().sendFeedback(Text.literal("Cannon placement guide: ON")); return Command.SINGLE_SUCCESS; }))
+                    .then(ClientCommandManager.literal("off").executes(ctx -> { placementGuideEnabled = false; ctx.getSource().sendFeedback(Text.literal("Cannon placement guide: OFF")); return Command.SINGLE_SUCCESS; }))));
+
             dispatcher.register(ClientCommandManager.literal("afk")
                 .executes(context -> {
                     autoReconnect.toggle(MinecraftClient.getInstance());
@@ -90,6 +143,31 @@ public final class CannonLinesClient implements ClientModInitializer {
                     return Command.SINGLE_SUCCESS;
                 })));
         });
+    }
+
+
+    private void loadEnemyNames() {
+        try {
+            if (Files.exists(enemyFile)) {
+                for (String line : Files.readAllLines(enemyFile)) {
+                    String name = line.trim();
+                    if (!name.isEmpty()) enemyNames.add(name.toLowerCase(java.util.Locale.ROOT));
+                }
+            }
+        } catch (IOException e) { System.err.println("[CannonLines] Could not load enemy list: " + e.getMessage()); }
+    }
+
+    private void saveEnemyNames() {
+        try {
+            Files.createDirectories(enemyFile.getParent());
+            Files.write(enemyFile, enemyNames);
+        } catch (IOException e) { System.err.println("[CannonLines] Could not save enemy list: " + e.getMessage()); }
+    }
+
+    private static int parseCoordinate(String value) {
+        String v = value.trim().toLowerCase(java.util.Locale.ROOT);
+        if (v.endsWith("k")) return (int)Math.round(Double.parseDouble(v.substring(0,v.length()-1)) * 1000.0);
+        return Integer.parseInt(v);
     }
 
     private void onTick(MinecraftClient client) {
