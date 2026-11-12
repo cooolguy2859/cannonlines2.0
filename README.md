@@ -1,12 +1,23 @@
 # CannonLines
 
-Minecraft 1.21.11 • Fabric • Java 21
+Minecraft 1.21.11 • Fabric • Java 21 runtime
 
 CannonLines renders a client-side `END_ROD` particle trail behind nearby slime cannon entities. Use `/cannonlines` to toggle the trail.
 
+## Auto-Reconnect
+
+- Run `/afk` while connected to toggle Auto-Reconnect on or off.
+- When enabled, CannonLines saves the current multiplayer server and sends `/joinlifesteal`.
+- If a temporary network failure disconnects you, it retries the last server with increasing delays.
+- After reconnecting, it waits briefly and sends `/joinlifesteal` again.
+- Press **Right Shift** to open the Auto-Reconnect menu. Use the button to enable or disable it.
+- Check the current state with `/afk status`.
+- Retries are limited to recognizable network errors. Server-initiated kicks, AFK removals, bans, and other policy disconnects are not automatically retried.
+- The feature does not simulate movement or input to avoid server AFK checks.
+
 ## Ruin Party
 
-CannonLines now has a shared party relay. Players using CannonLines can join the same party and share location pings while connected to the same Minecraft server.
+CannonLines has a shared party relay. Players using CannonLines can join the same party and share location pings while connected to the same Minecraft server.
 
 - Join or create the party: `/cannonparty join Ruin`
 - Reconnects automatically on later game sessions after joining once.
@@ -41,4 +52,4 @@ The 64-block trail is emitted in four staggered passes, with wider particle spac
 
 ## Build
 
-Run `gradle build` with Java 21 installed.
+The mod targets Java 21 bytecode. Build with Java 25 installed because the selected Fabric Loom version requires Java 25 to run.
