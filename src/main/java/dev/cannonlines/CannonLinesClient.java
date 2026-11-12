@@ -132,8 +132,7 @@ public final class CannonLinesClient implements ClientModInitializer {
             for (double distance = 0.0; distance <= TRAIL_LENGTH; distance += PARTICLE_SPACING) {
                 if ((sampleIndex++ + tick / SCAN_EVERY_TICKS) % TRAIL_PARTICLE_PASSES != 0) continue;
                 Vec3d pos = rear.subtract(forward.multiply(distance));
-                world.addParticle(ParticleTypes.END_ROD, false, true,
-                    pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+                world.addParticle(pos.x, pos.y, pos.z, 0.0, 0.0, ParticleTypes.END_ROD);
             }
         }
     }
@@ -198,10 +197,8 @@ public final class CannonLinesClient implements ClientModInitializer {
 
         pingTicksRemaining--;
         if (client.world.getTime() % 3 == 0) {
-            client.world.addParticle(ParticleTypes.HAPPY_VILLAGER, false, true,
-                pingPosition.x, pingPosition.y + 0.15, pingPosition.z, 0.0, 0.025, 0.0);
-            client.world.addParticle(ParticleTypes.END_ROD, false, true,
-                pingPosition.x, pingPosition.y + 0.45, pingPosition.z, 0.0, 0.015, 0.0);
+            client.world.addParticle(pingPosition.x, pingPosition.y + 0.15, pingPosition.z, 0.0, 0.025, ParticleTypes.HAPPY_VILLAGER);
+            client.world.addParticle(pingPosition.x, pingPosition.y + 0.45, pingPosition.z, 0.0, 0.015, ParticleTypes.END_ROD);
         }
 
         if (pingTicksRemaining == 0) {
