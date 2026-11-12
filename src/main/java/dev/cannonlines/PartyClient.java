@@ -97,7 +97,7 @@ final class PartyClient {
                 pings.remove(ping.id);
                 continue;
             }
-            if (!ping.dimension.equals(dimension)) continue;
+            if (!ping.dimension.equals(dimension) || ping.player.equalsIgnoreCase(client.player.getName().getString())) continue;
             if (client.world.getTime() % 3 == 0) {
                 client.world.addParticle(ParticleTypes.HAPPY_VILLAGER,
                     ping.x, ping.y + 0.15, ping.z, 0.0, 0.025, 0.0);
@@ -109,6 +109,7 @@ final class PartyClient {
 
     private void poll(MinecraftClient client) {
         if (!polling.compareAndSet(false, true)) return;
+        String ownName = client.player.getName().getString();
         String url = endpoint("/party/state");
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(5)).GET().build();
         http.sendAsync(request, HttpResponse.BodyHandlers.ofString()).whenComplete((response, error) -> {
@@ -127,7 +128,7 @@ final class PartyClient {
                         obj.get("createdAt").getAsLong());
                     if (now - ping.createdAt <= PING_LIFETIME_MS) {
                         pings.put(id, ping);
-                        if (seenPings.add(id) && !ping.player.equalsIgnoreCase(client.player.getName().getString())) {
+                        if (seenPings.add(id) && !ping.player.equalsIgnoreCase(ownName)) {
                             client.execute(() -> {
                                 if (client.player != null) client.player.sendMessage(
                                     Text.literal(ping.player + " placed a party ping."), true);
