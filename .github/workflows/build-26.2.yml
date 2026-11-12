@@ -24,6 +24,7 @@ jobs:
           cp migration/1.21.11/build.gradle build.gradle
           cp migration/1.21.11/gradle.properties gradle.properties
           gradle migrateMappings --mappings "net.minecraft:mappings:1.21.11" --overrideInputsIHaveABackup --no-daemon
+          git checkout HEAD -- build.gradle gradle.properties
       - name: Build 26.2
         run: gradle build --no-daemon
       - uses: actions/upload-artifact@v4
