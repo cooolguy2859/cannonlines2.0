@@ -1,6 +1,7 @@
 package dev.cannonlines;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import java.util.UUID;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -43,6 +44,7 @@ public final class CannonLinesClient implements ClientModInitializer {
 
     // Client-only player marker. The server is never told to apply the glowing status effect.
     private KeyBinding markEnemyKey;
+    private final PartyClient partyClient = new PartyClient();
     private UUID markedPlayerId;
     private boolean markedPlayerWasGlowing;
 
@@ -62,13 +64,28 @@ public final class CannonLinesClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommandManager.literal("cannonlines").executes(context -> {
                 enabled = !enabled;
                 context.getSource().sendFeedback(Text.literal("CannonLines: " + (enabled ? "ON" : "OFF")));
                 return Command.SINGLE_SUCCESS;
-            }))
-        );
+            }));
+            dispatcher.register(ClientCommandManager.literal("cannonparty")
+                .then(ClientCommandManager.literal("join")
+                    .then(ClientCommandManager.argument("code", StringArgumentType.word())
+                        .executes(context -> {
+                            partyClient.join(StringArgumentType.getString(context, "code"), MinecraftClient.getInstance());
+                            return Command.SINGLE_SUCCESS;
+                        })))
+                .then(ClientCommandManager.literal("leave").executes(context -> {
+                    partyClient.leave(MinecraftClient.getInstance());
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(ClientCommandManager.literal("status").executes(context -> {
+                    context.getSource().sendFeedback(Text.literal("CannonLines party: " + partyClient.status()));
+                    return Command.SINGLE_SUCCESS;
+                })));
+        });
     }
 
     private void onTick(MinecraftClient client) {
@@ -79,6 +96,7 @@ public final class CannonLinesClient implements ClientModInitializer {
             return;
         }
 
+        partyClient.tick(client);
         while (pingKey.wasPressed()) createDistancePing(client);
         while (markEnemyKey.wasPressed()) toggleMarkedPlayer(client);
         updateMarkedPlayer(client);
@@ -157,6 +175,7 @@ public final class CannonLinesClient implements ClientModInitializer {
 
         pingPosition = Vec3d.ofCenter(blockHit.getBlockPos());
         pingTicksRemaining = PING_LIFETIME_TICKS;
+        partyClient.sendPing(client, pingPosition);
         double distance = Math.sqrt(client.player.squaredDistanceTo(pingPosition));
         client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks away"), true);
     }
