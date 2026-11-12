@@ -132,7 +132,8 @@ public final class CannonLinesClient implements ClientModInitializer {
             for (double distance = 0.0; distance <= TRAIL_LENGTH; distance += PARTICLE_SPACING) {
                 if ((sampleIndex++ + tick / SCAN_EVERY_TICKS) % TRAIL_PARTICLE_PASSES != 0) continue;
                 Vec3d pos = rear.subtract(forward.multiply(distance));
-                world.addParticle(ParticleTypes.END_ROD, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+                world.addParticle(ParticleTypes.END_ROD, false, true,
+                    pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
             }
         }
     }
@@ -185,7 +186,7 @@ public final class CannonLinesClient implements ClientModInitializer {
         pingTicksRemaining = PING_LIFETIME_TICKS;
         partyClient.sendPing(client, pingPosition);
         double distance = Math.sqrt(client.player.squaredDistanceTo(pingPosition));
-        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks"), true);
+        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks away"), true);
     }
 
     private void updateDistancePing(MinecraftClient client) {
@@ -197,9 +198,9 @@ public final class CannonLinesClient implements ClientModInitializer {
 
         pingTicksRemaining--;
         if (client.world.getTime() % 3 == 0) {
-            client.world.addParticle(ParticleTypes.HAPPY_VILLAGER,
+            client.world.addParticle(ParticleTypes.HAPPY_VILLAGER, false, true,
                 pingPosition.x, pingPosition.y + 0.15, pingPosition.z, 0.0, 0.025, 0.0);
-            client.world.addParticle(ParticleTypes.END_ROD,
+            client.world.addParticle(ParticleTypes.END_ROD, false, true,
                 pingPosition.x, pingPosition.y + 0.45, pingPosition.z, 0.0, 0.015, 0.0);
         }
 
