@@ -50,7 +50,7 @@ final class PartyClient {
     void join(String code, MinecraftClient client) {
         String clean = code == null ? "" : code.trim();
         if (!clean.matches("[A-Za-z0-9_-]{3,24}")) {
-            client.player.sendMessage(Text.literal("Party code must be 3-24 letters, numbers, _ or -."), false);
+            client.player.sendMessage(Text.literal("Party code must be 3-24 letters, numbers, _ or -."));
             return;
         }
         partyCode = clean;
@@ -70,7 +70,7 @@ final class PartyClient {
         pings.clear();
         seenPings.clear();
         try { Files.deleteIfExists(configFile); } catch (IOException ignored) {}
-        if (client.player != null) client.player.sendMessage(Text.literal("Left the CannonLines party."), false);
+        if (client.player != null) client.player.sendMessage(Text.literal("Left the CannonLines party."));
     }
 
     String status() {
@@ -138,7 +138,7 @@ final class PartyClient {
                         if (seenPings.add(id) && !ping.player.equalsIgnoreCase(ownName)) {
                             client.execute(() -> {
                                 if (client.player != null) client.player.sendMessage(
-                                    Text.literal(ping.player + " placed a party ping."), true);
+                                    Text.literal(ping.player + " placed a party ping."));
                             });
                         }
                     }
@@ -160,9 +160,9 @@ final class PartyClient {
                 client.execute(() -> {
                     if (client.player == null) return;
                     if (error == null && response != null && response.statusCode() >= 200 && response.statusCode() < 300) {
-                        client.player.sendMessage(Text.literal(successMessage), false);
+                        client.player.sendMessage(Text.literal(successMessage));
                     } else {
-                        client.player.sendMessage(Text.literal("Party connection failed. Check your internet and try again."), false);
+                        client.player.sendMessage(Text.literal("Party connection failed. Check your internet and try again."));
                     }
                 });
             }
