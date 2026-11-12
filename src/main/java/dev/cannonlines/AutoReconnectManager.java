@@ -1,16 +1,19 @@
 package dev.cannonlines;
 
+import java.lang.reflect.Field;
+import java.util.Locale;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.DisconnectedScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import net.minecraft.client.network.ServerAddress;
 import net.minecraft.client.network.ServerInfo;
+import net.minecraft.network.DisconnectionInfo;
 import net.minecraft.text.Text;
 
 /**
- * Reconnects to the last multiplayer server after an unexpected disconnect.
- * It does not send movement or other input to avoid server AFK checks.
+ * Reconnects after transient network failures only.
+ * Server-initiated kicks, AFK removals, bans, and other policy disconnects are not retried.
  */
 public final class AutoReconnectManager {
     private static final int INITIAL_RETRY_TICKS = 100;
@@ -113,14 +116,20 @@ public final class AutoReconnectManager {
             return;
         }
 
-        if (!enabled || lastServer == null || !(client.currentScreen instanceof DisconnectedScreen)) {
+        if (!enabled || lastServer == null || !(client.currentScreen instanceof DisconnectedScreen disconnectedScreen)) {
+            return;
+        }
+
+        if (!isTransientNetworkFailure(disconnectedScreen)) {
+            disable();
+            status = "Stopped • server disconnects are not auto-retried";
             return;
         }
 
         if (!connectionWasLost) {
             connectionWasLost = true;
             retryTicks = INITIAL_RETRY_TICKS;
-            status = "Disconnected • retrying soon";
+            status = "Network lost • retrying soon";
         }
 
         if (connectInProgress) {
@@ -151,5 +160,30 @@ public final class AutoReconnectManager {
         status = "Reconnecting • attempt " + attempts + "/" + MAX_ATTEMPTS;
         Screen parent = client.currentScreen;
         ConnectScreen.connect(parent, client, ServerAddress.parse(lastServer.address), lastServer, false, null);
+    }
+
+    private boolean isTransientNetworkFailure(DisconnectedScreen screen) {
+        try {
+            Field infoField = DisconnectedScreen.class.getDeclaredField("info");
+            infoField.setAccessible(true);
+            DisconnectionInfo info = (DisconnectionInfo) infoField.get(screen);
+            String reason = info.reason().getString().toLowerCase(Locale.ROOT);
+            return reason.contains("timed out")
+                || reason.contains("timeout")
+                || reason.contains("connection reset")
+                || reason.contains("connection lost")
+                || reason.contains("connection closed")
+                || reason.contains("connection refused")
+                || reason.contains("end of stream")
+                || reason.contains("io.netty")
+                || reason.contains("java.net")
+                || reason.contains("socket")
+                || reason.contains("network is unreachable")
+                || reason.contains("no route to host")
+                || reason.contains("failed to connect");
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            // If the disconnect reason cannot be read safely, do not retry it.
+            return false;
+        }
     }
 }
