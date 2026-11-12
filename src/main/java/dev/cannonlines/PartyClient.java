@@ -107,7 +107,7 @@ final class PartyClient {
             if (!ping.dimension.equals(dimension) || ping.player.equalsIgnoreCase(client.player.getName().getString())) continue;
             if (client.world.getTime() % 3 == 0) {
                 client.particleManager.addParticle(ParticleTypes.HAPPY_VILLAGER, ping.x, ping.y + 0.15, ping.z, 0.0, 0.025, 0.0);
-                client.client.particleManager.addParticle(ParticleTypes.END_ROD, ping.x, ping.y + 0.45, ping.z, 0.0, 0.015, 0.0);
+                client.particleManager.addParticle(ParticleTypes.END_ROD, ping.x, ping.y + 0.45, ping.z, 0.0, 0.015, 0.0);
             }
         }
     }
