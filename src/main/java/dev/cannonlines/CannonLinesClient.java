@@ -198,7 +198,7 @@ public final class CannonLinesClient implements ClientModInitializer {
         pingTicksRemaining--;
         if (client.world.getTime() % 3 == 0) {
             client.particleManager.addParticle(ParticleTypes.HAPPY_VILLAGER, pingPosition.x, pingPosition.y + 0.15, pingPosition.z, 0.0, 0.025, 0.0);
-            client.client.particleManager.addParticle(ParticleTypes.END_ROD, pingPosition.x, pingPosition.y + 0.45, pingPosition.z, 0.0, 0.015, 0.0);
+            client.particleManager.addParticle(ParticleTypes.END_ROD, pingPosition.x, pingPosition.y + 0.45, pingPosition.z, 0.0, 0.015, 0.0);
         }
 
         if (pingTicksRemaining == 0) {
