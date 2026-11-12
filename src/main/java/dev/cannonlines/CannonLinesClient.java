@@ -13,7 +13,6 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.mob.SlimeEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
@@ -143,16 +142,16 @@ public final class CannonLinesClient implements ClientModInitializer {
             && target != client.player) {
             if (target.getUuid().equals(markedPlayerId)) {
                 clearMarkedPlayer(client);
-                client.player.sendMessage(Text.literal("Enemy highlight removed."), true);
+                client.player.sendMessage(Text.literal("Enemy highlight removed."));
             } else {
                 clearMarkedPlayer(client);
                 markedPlayerId = target.getUuid();
                 markedPlayerWasGlowing = target.isGlowing();
                 target.setGlowing(true);
-                client.player.sendMessage(Text.literal("Marked " + target.getName().getString()), true);
+                client.player.sendMessage(Text.literal("Marked " + target.getName().getString()));
             }
         } else {
-            client.player.sendMessage(Text.literal("Look directly at a player to mark them."), true);
+            client.player.sendMessage(Text.literal("Look directly at a player to mark them."));
         }
     }
 
@@ -177,7 +176,7 @@ public final class CannonLinesClient implements ClientModInitializer {
     private void createDistancePing(MinecraftClient client) {
         HitResult hit = client.player.raycast(PING_RAYCAST_DISTANCE, 1.0F, false);
         if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
-            client.player.sendMessage(Text.literal("Distance Ping: look at a block or location first."), true);
+            client.player.sendMessage(Text.literal("Distance Ping: look at a block or location first."));
             return;
         }
 
@@ -185,7 +184,7 @@ public final class CannonLinesClient implements ClientModInitializer {
         pingTicksRemaining = PING_LIFETIME_TICKS;
         partyClient.sendPing(client, pingPosition);
         double distance = Math.sqrt(client.player.squaredDistanceTo(pingPosition));
-        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks"), true);
+        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks"));
     }
 
     private void updateDistancePing(MinecraftClient client) {
@@ -204,10 +203,10 @@ public final class CannonLinesClient implements ClientModInitializer {
         }
 
         if (pingTicksRemaining == 0) {
-            client.player.sendMessage(Text.literal("Distance Ping expired."), true);
+            client.player.sendMessage(Text.literal("Distance Ping expired."));
         } else if (client.world.getTime() % 10 == 0) {
             double distance = Math.sqrt(client.player.squaredDistanceTo(pingPosition));
-            client.player.sendMessage(Text.literal("Ping • " + Math.round(distance) + " blocks"), true);
+            client.player.sendMessage(Text.literal("Ping • " + Math.round(distance) + " blocks"));
         }
     }
 }
