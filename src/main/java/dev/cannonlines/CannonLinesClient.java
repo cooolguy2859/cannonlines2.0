@@ -19,7 +19,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -28,39 +27,35 @@ public final class CannonLinesClient implements ClientModInitializer {
     private boolean enabled = true;
     private int tick = 0;
 
-    // Stagger trail particles over four passes to reduce particle work substantially.
     private static final double TRAIL_LENGTH = 64.0;
     private static final double PARTICLE_SPACING = 0.35;
     private static final int SCAN_EVERY_TICKS = 2;
     private static final int TRAIL_PARTICLE_PASSES = 4;
     private static final double MAX_SCAN_DISTANCE = 48.0;
 
-    // Distance Ping: configurable key, default 1.
     private static final int PING_LIFETIME_TICKS = 200;
     private static final double PING_RAYCAST_DISTANCE = 128.0;
     private KeyBinding pingKey;
     private Vec3d pingPosition;
     private int pingTicksRemaining;
 
-    // Client-only player marker. The server is never told to apply the glowing status effect.
     private KeyBinding markEnemyKey;
+    private KeyBinding autoReconnectMenuKey;
     private final PartyClient partyClient = new PartyClient();
+    private final AutoReconnectManager autoReconnect = new AutoReconnectManager();
     private UUID markedPlayerId;
     private boolean markedPlayerWasGlowing;
 
     @Override
     public void onInitializeClient() {
         pingKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.cannonlines.distance_ping",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_1,
-            KeyBinding.Category.MISC
+            "key.cannonlines.distance_ping", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_1, KeyBinding.Category.MISC
         ));
         markEnemyKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.cannonlines.mark_enemy",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_H,
-            KeyBinding.Category.MISC
+            "key.cannonlines.mark_enemy", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_H, KeyBinding.Category.MISC
+        ));
+        autoReconnectMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.cannonlines.auto_reconnect_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, KeyBinding.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
@@ -70,6 +65,15 @@ public final class CannonLinesClient implements ClientModInitializer {
                 context.getSource().sendFeedback(Text.literal("CannonLines: " + (enabled ? "ON" : "OFF")));
                 return Command.SINGLE_SUCCESS;
             }));
+            dispatcher.register(ClientCommandManager.literal("afk")
+                .executes(context -> {
+                    autoReconnect.toggle(MinecraftClient.getInstance());
+                    return Command.SINGLE_SUCCESS;
+                })
+                .then(ClientCommandManager.literal("status").executes(context -> {
+                    context.getSource().sendFeedback(Text.literal("Auto-Reconnect: " + autoReconnect.getStatus()));
+                    return Command.SINGLE_SUCCESS;
+                })));
             dispatcher.register(ClientCommandManager.literal("cannonparty")
                 .then(ClientCommandManager.literal("join")
                     .then(ClientCommandManager.argument("code", StringArgumentType.word())
@@ -89,6 +93,11 @@ public final class CannonLinesClient implements ClientModInitializer {
     }
 
     private void onTick(MinecraftClient client) {
+        autoReconnect.tick(client);
+        while (autoReconnectMenuKey.wasPressed()) {
+            client.setScreen(new AutoReconnectScreen(autoReconnect));
+        }
+
         if (client.world == null || client.player == null) {
             markedPlayerId = null;
             pingPosition = null;
@@ -154,7 +163,6 @@ public final class CannonLinesClient implements ClientModInitializer {
             markedPlayerId = null;
             return;
         }
-        // Reapply locally in case entity metadata refreshes. This does not send a status effect.
         target.setGlowing(true);
     }
 
@@ -177,7 +185,7 @@ public final class CannonLinesClient implements ClientModInitializer {
         pingTicksRemaining = PING_LIFETIME_TICKS;
         partyClient.sendPing(client, pingPosition);
         double distance = Math.sqrt(client.player.squaredDistanceTo(pingPosition));
-        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks away"), true);
+        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks"), true);
     }
 
     private void updateDistancePing(MinecraftClient client) {
