@@ -53,3 +53,6 @@ The 64-block trail is emitted in four staggered passes, with wider particle spac
 ## Build
 
 The mod targets Java 21 bytecode. Build with Java 25 installed because the selected Fabric Loom version requires Java 25 to run.
+
+
+Minecraft 26.2 port: the branch uses Java 25, the 26.2 Fabric API, updated key mapping/command APIs, and the new GUI extraction lifecycle.

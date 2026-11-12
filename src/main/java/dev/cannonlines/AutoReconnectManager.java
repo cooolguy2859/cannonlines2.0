@@ -51,7 +51,7 @@ public final class AutoReconnectManager {
         if (enabled) {
             disable();
             if (client.player != null) {
-                client.player.sendMessage(Text.literal("CannonLines Auto-Reconnect: OFF"), true);
+                client.player.sendMessage(Text.literal("CannonLines Auto-Reconnect: OFF"));
             }
             return;
         }
@@ -63,7 +63,7 @@ public final class AutoReconnectManager {
         if (lastServer == null) {
             status = "Join a multiplayer server first";
             if (client.player != null) {
-                client.player.sendMessage(Text.literal("Auto-Reconnect: join a server first so CannonLines can save it."), false);
+                client.player.sendMessage(Text.literal("Auto-Reconnect: join a server first so CannonLines can save it."));
             }
             return;
         }
@@ -77,7 +77,7 @@ public final class AutoReconnectManager {
         status = "Enabled";
         if (client.player != null && client.player.networkHandler != null) {
             client.player.networkHandler.sendChatCommand("joinlifesteal");
-            client.player.sendMessage(Text.literal("Auto-Reconnect: ON • sent /joinlifesteal"), true);
+            client.player.sendMessage(Text.literal("Auto-Reconnect: ON • sent /joinlifesteal"));
         }
     }
 
@@ -110,7 +110,7 @@ public final class AutoReconnectManager {
                 if (joinCommandDelay-- == 0 && enabled && client.player.networkHandler != null) {
                     client.player.networkHandler.sendChatCommand("joinlifesteal");
                     status = "Connected • sent /joinlifesteal";
-                    client.player.sendMessage(Text.literal("CannonLines: sent /joinlifesteal after reconnecting."), true);
+                    client.player.sendMessage(Text.literal("CannonLines: sent /joinlifesteal after reconnecting."));
                 }
             }
             return;
