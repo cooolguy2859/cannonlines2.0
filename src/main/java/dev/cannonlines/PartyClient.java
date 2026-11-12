@@ -35,6 +35,7 @@ final class PartyClient {
     private final Path configFile = FabricLoader.getInstance().getConfigDir().resolve("cannonlines-party.txt");
     private volatile String partyCode;
     private int ticksSincePoll;
+    private String lastServerKey;
 
     PartyClient() {
         try {
@@ -86,6 +87,12 @@ final class PartyClient {
 
     void tick(MinecraftClient client) {
         if (partyCode == null || client.player == null || client.world == null) return;
+        String currentServer = serverKey(client);
+        if (!currentServer.equals(lastServerKey)) {
+            lastServerKey = currentServer;
+            pings.clear();
+            seenPings.clear();
+        }
         if (++ticksSincePoll >= 20) {
             ticksSincePoll = 0;
             poll(client);
@@ -164,10 +171,13 @@ final class PartyClient {
 
     private String endpoint(String path) {
         MinecraftClient client = MinecraftClient.getInstance();
-        String server = client.getCurrentServerEntry() == null
+        return API + path + "?code=" + encode(partyCode) + "&server=" + encode(serverKey(client));
+    }
+
+    private String serverKey(MinecraftClient client) {
+        return client.getCurrentServerEntry() == null
             ? "singleplayer"
             : client.getCurrentServerEntry().address.toLowerCase();
-        return API + path + "?code=" + encode(partyCode) + "&server=" + encode(server);
     }
 
     private static String encode(String value) {
