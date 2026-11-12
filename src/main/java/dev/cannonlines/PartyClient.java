@@ -106,10 +106,8 @@ final class PartyClient {
             }
             if (!ping.dimension.equals(dimension) || ping.player.equalsIgnoreCase(client.player.getName().getString())) continue;
             if (client.world.getTime() % 3 == 0) {
-                client.world.addParticle(ParticleTypes.HAPPY_VILLAGER, false, true,
-                    ping.x, ping.y + 0.15, ping.z, 0.0, 0.025, 0.0);
-                client.world.addParticle(ParticleTypes.END_ROD, false, true,
-                    ping.x, ping.y + 0.45, ping.z, 0.0, 0.015, 0.0);
+                client.world.addParticle(ping.x, ping.y + 0.15, ping.z, 0.0, 0.025, ParticleTypes.HAPPY_VILLAGER);
+                client.world.addParticle(ping.x, ping.y + 0.45, ping.z, 0.0, 0.015, ParticleTypes.END_ROD);
             }
         }
     }
