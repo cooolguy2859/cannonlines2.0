@@ -1,5 +1,6 @@
 {
   "key.cannonlines.distance_ping": "Place Distance Ping",
   "key.cannonlines.mark_enemy": "Mark / Unmark Player",
+  "key.cannonlines.auto_reconnect_menu": "Open Auto-Reconnect Menu",
   "category.cannonlines": "CannonLines"
 }
