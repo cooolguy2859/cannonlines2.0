@@ -96,7 +96,7 @@ public final class CannonLinesClient implements ClientModInitializer {
         pingPosition = Vec3d.ofCenter(pos);
         pingTicksRemaining = PING_LIFETIME_TICKS;
         double distance = Math.sqrt(client.player.squaredDistanceTo(pingPosition));
-        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + "m away"), true);
+        client.player.sendMessage(Text.literal("Ping placed • " + Math.round(distance) + " blocks away"), true);
     }
 
     private void updateDistancePing(MinecraftClient client) {
