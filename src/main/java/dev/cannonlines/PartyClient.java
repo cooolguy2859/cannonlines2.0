@@ -61,7 +61,7 @@ final class PartyClient {
             Files.writeString(configFile, clean);
         } catch (IOException ignored) {
         }
-        post("/party/join", "{\"code\":" + quote(clean) + "}", client, "Joined CannonLines party " + clean + ".");
+        post("/party/join", "{"code":" + quote(clean) + "}", client, "Joined CannonLines party " + clean + ".");
         ticksSincePoll = 20;
     }
 
@@ -79,9 +79,9 @@ final class PartyClient {
 
     void sendPing(MinecraftClient client, Vec3d position) {
         if (partyCode == null || client.player == null || client.world == null) return;
-        String body = "{\"player\":" + quote(client.player.getName().getString())
-            + ",\"dimension\":" + quote(client.world.getRegistryKey().getValue().toString())
-            + ",\"x\":" + position.x + ",\"y\":" + position.y + ",\"z\":" + position.z + "}";
+        String body = "{"player":" + quote(client.player.getName().getString())
+            + ","dimension":" + quote(client.world.getRegistryKey().getValue().toString())
+            + ","x":" + position.x + ","y":" + position.y + ","z":" + position.z + "}";
         post("/party/ping", body, client, null);
     }
 
@@ -106,9 +106,9 @@ final class PartyClient {
             }
             if (!ping.dimension.equals(dimension) || ping.player.equalsIgnoreCase(client.player.getName().getString())) continue;
             if (client.world.getTime() % 3 == 0) {
-                client.world.addParticle(ParticleTypes.HAPPY_VILLAGER,
+                client.world.addParticle(ParticleTypes.HAPPY_VILLAGER, false, true,
                     ping.x, ping.y + 0.15, ping.z, 0.0, 0.025, 0.0);
-                client.world.addParticle(ParticleTypes.END_ROD,
+                client.world.addParticle(ParticleTypes.END_ROD, false, true,
                     ping.x, ping.y + 0.45, ping.z, 0.0, 0.015, 0.0);
             }
         }
@@ -185,7 +185,7 @@ final class PartyClient {
     }
 
     private static String quote(String value) {
-        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        return """ + value.replace("\", "\\").replace(""", "\"") + """;
     }
 
     private record SharedPing(String id, String player, String dimension,
