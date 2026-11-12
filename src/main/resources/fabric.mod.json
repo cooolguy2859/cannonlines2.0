@@ -3,10 +3,11 @@
   "id": "cannonlines",
   "version": "${version}",
   "name": "Cannon Lines",
-  "description": "Client-side End Rod particle trail from the rear of cannon slime entities.",
+  "description": "Client-side slime particle trails, enemy marking, distance pings, and auto reconnect.",
   "environment": "client",
   "entrypoints": {
-    "client": ["dev.cannonlines.CannonLinesClient"]
+    "client": ["dev.cannonlines.CannonLinesClient"],
+    "mod-control-center": ["dev.cannonlines.ControlCenterBridge"]
   },
   "depends": {
     "fabricloader": ">=0.18.1",
