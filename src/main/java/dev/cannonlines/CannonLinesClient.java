@@ -129,6 +129,18 @@ public final class CannonLinesClient implements ClientModInitializer {
                 .then(ClientCommandManager.literal("guide").then(ClientCommandManager.literal("on").executes(ctx -> { placementGuideEnabled = true; ctx.getSource().sendFeedback(Text.literal("Cannon placement guide: ON")); return Command.SINGLE_SUCCESS; }))
                     .then(ClientCommandManager.literal("off").executes(ctx -> { placementGuideEnabled = false; ctx.getSource().sendFeedback(Text.literal("Cannon placement guide: OFF")); return Command.SINGLE_SUCCESS; }))));
 
+
+            // Lifesteal owns /cannon, so use a unique root for AFK control.
+            dispatcher.register(ClientCommandManager.literal("clafk").executes(ctx -> {
+                autoReconnect.toggle(MinecraftClient.getInstance());
+                return Command.SINGLE_SUCCESS;
+            }).then(ClientCommandManager.literal("status").executes(ctx -> {
+                ctx.getSource().sendFeedback(Text.literal("Auto-Reconnect: " + autoReconnect.getStatus()
+                    + " | Server: " + autoReconnect.getServerName()
+                    + " | Attempts: " + autoReconnect.getAttempts()));
+                return Command.SINGLE_SUCCESS;
+            })));
+
             dispatcher.register(ClientCommandManager.literal("cannonparty")
                 .then(ClientCommandManager.literal("join")
                     .then(ClientCommandManager.argument("code", StringArgumentType.word())
