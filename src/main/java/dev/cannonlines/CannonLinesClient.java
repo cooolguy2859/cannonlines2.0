@@ -53,7 +53,7 @@ public final class CannonLinesClient implements ClientModInitializer {
     private KeyBinding markEnemyKey;
     private final PartyClient partyClient = new PartyClient();
     private final AutoReconnectManager autoReconnect = new AutoReconnectManager();
-    private UUID markedPlayerId;
+    private static volatile UUID markedPlayerId;
     private boolean markedPlayerWasGlowing;
 
     @Override
@@ -64,7 +64,7 @@ public final class CannonLinesClient implements ClientModInitializer {
             "key.cannonlines.distance_ping", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_1, KeyBinding.Category.MISC
         ));
         markEnemyKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.cannonlines.mark_enemy", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_H, KeyBinding.Category.MISC
+            "key.cannonlines.mark_enemy", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_J, KeyBinding.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
@@ -219,6 +219,8 @@ public final class CannonLinesClient implements ClientModInitializer {
         }
     }
 
+    public static UUID getMarkedPlayerId() { return markedPlayerId; }
+
     private void toggleMarkedPlayer(MinecraftClient client) {
         if (client.crosshairTarget instanceof EntityHitResult entityHit
             && entityHit.getEntity() instanceof PlayerEntity target
@@ -230,7 +232,6 @@ public final class CannonLinesClient implements ClientModInitializer {
                 clearMarkedPlayer(client);
                 markedPlayerId = target.getUuid();
                 markedPlayerWasGlowing = target.isGlowing();
-                target.setGlowing(true);
                 client.player.sendMessage(Text.literal("Marked " + target.getName().getString()), true);
             }
         } else {
@@ -245,13 +246,12 @@ public final class CannonLinesClient implements ClientModInitializer {
             markedPlayerId = null;
             return;
         }
-        target.setGlowing(true);
     }
 
     private void clearMarkedPlayer(MinecraftClient client) {
         if (markedPlayerId == null) return;
         PlayerEntity previous = client.world == null ? null : client.world.getPlayerByUuid(markedPlayerId);
-        if (previous != null) previous.setGlowing(markedPlayerWasGlowing);
+        // The ESP mixin only overrides the local render check; it never changes server entity state.
         markedPlayerId = null;
         markedPlayerWasGlowing = false;
     }
