@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.cannonlines.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["EntityGlowMixin"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
