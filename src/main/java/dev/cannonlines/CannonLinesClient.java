@@ -129,27 +129,6 @@ public final class CannonLinesClient implements ClientModInitializer {
                 .then(ClientCommandManager.literal("guide").then(ClientCommandManager.literal("on").executes(ctx -> { placementGuideEnabled = true; ctx.getSource().sendFeedback(Text.literal("Cannon placement guide: ON")); return Command.SINGLE_SUCCESS; }))
                     .then(ClientCommandManager.literal("off").executes(ctx -> { placementGuideEnabled = false; ctx.getSource().sendFeedback(Text.literal("Cannon placement guide: OFF")); return Command.SINGLE_SUCCESS; }))));
 
-            dispatcher.register(ClientCommandManager.literal("afk")
-                .executes(context -> {
-                    autoReconnect.toggle(MinecraftClient.getInstance());
-                    return Command.SINGLE_SUCCESS;
-                })
-                .then(ClientCommandManager.literal("on").executes(context -> {
-                    if (!autoReconnect.isEnabled()) autoReconnect.toggle(MinecraftClient.getInstance());
-                    context.getSource().sendFeedback(Text.literal("Auto-Reconnect: " + autoReconnect.getStatus()));
-                    return Command.SINGLE_SUCCESS;
-                }))
-                .then(ClientCommandManager.literal("off").executes(context -> {
-                    autoReconnect.disable();
-                    context.getSource().sendFeedback(Text.literal("Auto-Reconnect: OFF"));
-                    return Command.SINGLE_SUCCESS;
-                }))
-                .then(ClientCommandManager.literal("status").executes(context -> {
-                    context.getSource().sendFeedback(Text.literal("Auto-Reconnect: " + autoReconnect.getStatus()
-                        + " | Server: " + autoReconnect.getServerName()
-                        + " | Attempts: " + autoReconnect.getAttempts()));
-                    return Command.SINGLE_SUCCESS;
-                })));
             dispatcher.register(ClientCommandManager.literal("cannonparty")
                 .then(ClientCommandManager.literal("join")
                     .then(ClientCommandManager.argument("code", StringArgumentType.word())
