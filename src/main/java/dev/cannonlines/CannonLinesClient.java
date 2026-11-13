@@ -11,6 +11,7 @@ import java.io.IOException;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -68,6 +69,16 @@ public final class CannonLinesClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
+
+        // Handle this locally so a server-side /cannon command cannot swallow it.
+        ClientSendMessageEvents.ALLOW_COMMAND.register(command -> {
+            String normalized = command.startsWith("/") ? command.substring(1) : command;
+            if (normalized.trim().equalsIgnoreCase("cannon afk")) {
+                autoReconnect.toggle(MinecraftClient.getInstance());
+                return false;
+            }
+            return true;
+        });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommandManager.literal("cannonlines").executes(context -> {
                 enabled = !enabled;
@@ -105,6 +116,10 @@ public final class CannonLinesClient implements ClientModInitializer {
                 ctx.getSource().sendFeedback(Text.literal("Cannon Dev is active. Minecraft 1.21.11 | Development build."));
                 return Command.SINGLE_SUCCESS; })));
             dispatcher.register(ClientCommandManager.literal("cannon")
+                .then(ClientCommandManager.literal("afk").executes(ctx -> {
+                    autoReconnect.toggle(MinecraftClient.getInstance());
+                    return Command.SINGLE_SUCCESS;
+                }))
                 .then(ClientCommandManager.literal("gui").executes(ctx -> { ctx.getSource().sendFeedback(Text.literal("Use Right Shift to open CannonLines controls.")); return Command.SINGLE_SUCCESS; }))
                 .then(ClientCommandManager.literal("reach").then(ClientCommandManager.argument("blocks", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,500))
                     .executes(ctx -> { reachBlocks = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx,"blocks");
