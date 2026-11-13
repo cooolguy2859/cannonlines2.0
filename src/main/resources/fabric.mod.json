@@ -6,13 +6,20 @@
   "description": "Client-side slime particle trails, enemy marking, distance pings, and auto reconnect.",
   "environment": "client",
   "entrypoints": {
-    "client": ["dev.cannonlines.CannonLinesClient"],
-    "mod-control-center": ["dev.cannonlines.ControlCenterBridge"]
+    "client": [
+      "dev.cannonlines.CannonLinesClient"
+    ],
+    "mod-control-center": [
+      "dev.cannonlines.ControlCenterBridge"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.18.1",
     "minecraft": "~1.21.11",
     "java": ">=21",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    "cannonlines.mixins.json"
+  ]
 }
